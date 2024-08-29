@@ -130,11 +130,11 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
-  ssd1306_Init();
+ /* ssd1306_Init();
   ssd1306_Fill(Black);
   ssd1306_SetCursor(10, 20);
   ssd1306_WriteString("", Font_6x8, White);
-  ssd1306_UpdateScreen();
+  ssd1306_UpdateScreen();*/
 
   /* USER CODE END 2 */
 
@@ -146,6 +146,7 @@ int main(void)
   /*HAL_UART_Receive_IT(&huart, pData, Size)*/
   HAL_UART_Receive_IT(&huart1, &data_1, 1);
   HAL_UART_Receive_IT(&huart2, &data_2, 1);
+
   while (1)
   {
 	  /*if (is_full != 0) {
@@ -178,17 +179,18 @@ int main(void)
 			  };
 			  //HAL_UART_Transmit(&huart2, &size, 1, 10);
 
-			  if(right_buffer_ID(&data_2)){
-					HAL_UART_Transmit(&huart2, "Isabel A.M.", 11, 10);
+			  if(right_buffer_ID(data_2)){
+					HAL_UART_Transmit(&huart1, "Isabel A.M.", 11, 10);
 					ssd1306_WriteString("Maria Isabel A. Medina", Font_6x8, White);
 					ssd1306_UpdateScreen();
 			  }else {
-					HAL_UART_Transmit(&huart2, "ERROR!!", 7, 10);
+					HAL_UART_Transmit(&huart1, "ERROR!!", 7, 10);
 					ssd1306_WriteString("ERROR!!", Font_6x8, White);
 					ssd1306_UpdateScreen();
 			  }
 		  }
 	  }
+	  //ring_buffer_reset(rb_usart2);
 
 
 	  if(ring_buffer_size(&rb_usart1) != 0){
@@ -204,14 +206,10 @@ int main(void)
 				  data_1[i] = byte;
 			  };
 
-			  if(right_buffer_ID(&data_1)){
+			  if(right_buffer_ID(data_1)){
 					HAL_UART_Transmit(&huart2, "Isabel", 11, 10);
-					ssd1306_WriteString("Maria I.", Font_6x8, White);
-					ssd1306_UpdateScreen();
 			  }else {
 					HAL_UART_Transmit(&huart2, "ERROR!!", 7, 10);
-					ssd1306_WriteString("ERROR!!", Font_6x8, White);
-					ssd1306_UpdateScreen();
 			  }
 		  }
 	  }

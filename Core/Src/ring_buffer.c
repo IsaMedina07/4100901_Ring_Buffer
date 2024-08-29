@@ -15,7 +15,7 @@ uint8_t head_ptr;
 uint8_t tail_ptr;
 uint8_t is_full;*/
 
-uint8_t numberID[] = {'1','0','0','6','9','6','4','0','9','8'};
+uint8_t numberID[10] = {'1','0','0','6','9','6','4','0','9','8'};
 
 // Clase 23/08/2024
 void ring_buffer_init(ring_buffer_t *rb, uint8_t *mem_add, uint8_t cap){
@@ -86,20 +86,12 @@ void ring_buffer_reset(ring_buffer_t *rb){
 
 uint8_t ring_buffer_size(ring_buffer_t *rb){
 	uint8_t size = 0;
-	if(rb->head > rb->tail){
-		size = rb->head - rb->tail;
-	}
-	else if(rb->head < rb->tail){
-			size = rb->capacity - rb->tail + rb->head;
-	}else{
-		if(rb->is_full == 1){
-			size = rb->capacity -1;
-		}else{
-			size = 0;
+		if (rb->head >= rb->tail && rb->is_full == 0) {
+			size = rb->head - rb->tail;
+		} else {
+			size = (rb->capacity - rb->tail) + rb->head;
 		}
-	}
-
-	return size;
+		return size;
 };
 
 uint8_t ring_buffer_is_full(ring_buffer_t *rb){
