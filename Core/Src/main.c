@@ -23,6 +23,9 @@
 /* USER CODE BEGIN Includes */
 #include "ring_buffer.h"
 
+#include "ssd1306.h"
+#include "ssd1306_fonts.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,11 +44,20 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t data;
+uint8_t data_1;
+uint8_t data_2;
 
+ring_buffer_t rb_usart1;
+ring_buffer_t rb_usart2;
+
+uint8_t mem_usart1[10];
+uint8_t mem_usart2[10];
 
 /* USER CODE END PV */
 
@@ -53,6 +65,8 @@ uint8_t data;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -60,13 +74,18 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-	if (huart -> Instance == USART2) {
+	if (huart -> Instance == USART1) {
 		//HAL_UART_Transmit(&huart2, data, 1, 10);
-		ring_buffer_write(data);
-		HAL_UART_Receive_IT(&huart2, &data, 1);
+		ring_buffer_write(&rb_usart1, data_1);
+		HAL_UART_Receive_IT(&huart1, &data_1, 1);
 	}
 
-	// CLASE 12/08/2024
+	if (huart -> Instance == USART2) {
+			//HAL_UART_Transmit(&huart2, data, 1, 10);
+			ring_buffer_write(&rb_usart2, data_2);
+			HAL_UART_Receive_IT(&huart2, &data_2, 1);
+		}
+
 
 }
 
@@ -107,15 +126,26 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+
+  ssd1306_Init();
+  ssd1306_Fill(Black);
+  ssd1306_SetCursor(10, 20);
+  ssd1306_WriteString("", Font_6x8, White);
+  ssd1306_UpdateScreen();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  ring_buffer_init(&rb_usart2, mem_usart2, 10);
+  ring_buffer_init(&rb_usart1, mem_usart1, 10);
 
   /*HAL_UART_Receive_IT(&huart, pData, Size)*/
-  HAL_UART_Receive_IT(&huart2, &data, 1);
+  HAL_UART_Receive_IT(&huart1, &data_1, 1);
+  HAL_UART_Receive_IT(&huart2, &data_2, 1);
   while (1)
   {
 	  /*if (is_full != 0) {
@@ -133,26 +163,55 @@ int main(void)
 		  //HAL_UART_Transmit(&huart2, "\r\n", 2, 10);
 	  }*/
 
-	  if(ring_buffer_size() != 0){
-		  uint8_t size = ring_buffer_size();
+	  if(ring_buffer_size(&rb_usart2) != 0){
+		  uint8_t size = ring_buffer_size(&rb_usart2);
 		  size = size+0x30;
 
-		  if(ring_buffer_is_full()){
+		  if(ring_buffer_is_full(&rb_usart2)){
 			  uint8_t byte = 0;
 
-			  uint8_t data[10];
+			  uint8_t data_2[10];
 			  for (uint8_t i = 0; i <= 10; i++){
-				  ring_buffer_read(&byte);
-				  data[i] = byte;
+				  ring_buffer_read(&rb_usart2, &byte);
+				  data_2[i] = byte;
 				  //HAL_UART_Transmit(&huart2, &byte, 1, 10);
 			  };
 			  //HAL_UART_Transmit(&huart2, &size, 1, 10);
 
-			  if(right_buffer_ID(&data)){
+			  if(right_buffer_ID(&data_2)){
 					HAL_UART_Transmit(&huart2, "Isabel A.M.", 11, 10);
+					ssd1306_WriteString("Maria Isabel A. Medina", Font_6x8, White);
+					ssd1306_UpdateScreen();
 			  }else {
 					HAL_UART_Transmit(&huart2, "ERROR!!", 7, 10);
+					ssd1306_WriteString("ERROR!!", Font_6x8, White);
+					ssd1306_UpdateScreen();
+			  }
+		  }
+	  }
 
+
+	  if(ring_buffer_size(&rb_usart1) != 0){
+		  uint8_t size = ring_buffer_size(&rb_usart1);
+		  size = size+0x30;
+
+		  if(ring_buffer_is_full(&rb_usart1)){
+			  uint8_t byte = 0;
+
+			  uint8_t data_1[10];
+			  for (uint8_t i = 0; i <= 10; i++){
+				  ring_buffer_read(&rb_usart1, &byte);
+				  data_1[i] = byte;
+			  };
+
+			  if(right_buffer_ID(&data_1)){
+					HAL_UART_Transmit(&huart2, "Isabel", 11, 10);
+					ssd1306_WriteString("Maria I.", Font_6x8, White);
+					ssd1306_UpdateScreen();
+			  }else {
+					HAL_UART_Transmit(&huart2, "ERROR!!", 7, 10);
+					ssd1306_WriteString("ERROR!!", Font_6x8, White);
+					ssd1306_UpdateScreen();
 			  }
 		  }
 	  }
@@ -214,6 +273,89 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x10D19CE4;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
 }
 
 /**

@@ -59,6 +59,7 @@ void FLASH_IRQHandler(void);
 void RCC_IRQHandler(void);
 void EXTI1_IRQHandler(void);
 void EXTI4_IRQHandler(void);
+void USART1_IRQHandler(void);
 void USART2_IRQHandler(void);
 void FPU_IRQHandler(void);
 /* USER CODE BEGIN EFP */

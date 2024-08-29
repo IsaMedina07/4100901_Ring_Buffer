@@ -1,7 +1,8 @@
-../Core/Src/ring_buffer.c:27:6:ring_buffer_write	16	static
-../Core/Src/ring_buffer.c:56:9:ring_buffer_read	16	static
-../Core/Src/ring_buffer.c:72:6:ring_buffer_reset	4	static
-../Core/Src/ring_buffer.c:79:9:ring_buffer_size	16	static
-../Core/Src/ring_buffer.c:97:9:ring_buffer_is_full	4	static
-../Core/Src/ring_buffer.c:105:9:ring_buffer_is_empy	4	static
-../Core/Src/ring_buffer.c:113:9:right_buffer_ID	16	static
+../Core/Src/ring_buffer.c:21:6:ring_buffer_init	24	static
+../Core/Src/ring_buffer.c:35:6:ring_buffer_write	16	static
+../Core/Src/ring_buffer.c:64:9:ring_buffer_read	16	static
+../Core/Src/ring_buffer.c:80:6:ring_buffer_reset	16	static
+../Core/Src/ring_buffer.c:87:9:ring_buffer_size	24	static
+../Core/Src/ring_buffer.c:105:9:ring_buffer_is_full	16	static
+../Core/Src/ring_buffer.c:109:9:ring_buffer_is_empy	16	static
+../Core/Src/ring_buffer.c:117:9:right_buffer_ID	16	static
